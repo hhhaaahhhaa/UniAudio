@@ -16,7 +16,7 @@ test_sets="test-clean"
 # training config
 seed=999
 debug=true
-batch_scale=8000 # the total number of tokens in one batch
+batch_scale=4000 # the total number of tokens in one batch
 learning_rate=0.005 # the learning rate
 port=12345
 train_opts=

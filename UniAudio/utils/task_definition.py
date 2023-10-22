@@ -163,6 +163,12 @@ AudioEdit_format = {
     'features': [],
     'loss_key': 'audio_seq',
 }
+TVC_format = {
+    'keys': ["text_t5_seq", "audio_source_seq", "audio_seq"],
+    'type': ["text_t5", "audio", "audio"],
+    'features': [],
+    'loss_key': 'audio_seq',
+}
 InstructTTS_format = {
     'keys': ["phone_seq", "text_t5_seq", "audio_seq"],
     'type': ["phone", "text_t5", "audio"],
@@ -203,6 +209,7 @@ task_formats = {
     'InstructTTS': InstructTTS_format,
     'Speech_RIR': RIR_format,
     'speech_edit': speech_edit_format,
+    'TVC': TVC_format,
 }
 
 # 3. This part defins how data is loaded in the data_dict at the loading stage

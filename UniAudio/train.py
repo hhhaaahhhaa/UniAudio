@@ -11,6 +11,7 @@ import argparse
 import logging
 import json
 import functools
+from tqdm import tqdm
 
 from torch.distributed.fsdp import FullyShardedDataParallel as FSDP
 from torch.distributed.fsdp.wrap import transformer_auto_wrap_policy
@@ -75,7 +76,7 @@ def get_args():
 
     # args for save model and log: 
     parser.add_argument('--exp_dir', type=str, help='directory of this experiment')
-    parser.add_argument('--print_freq', type=int, default=500, help='the print frequency')
+    parser.add_argument('--print_freq', type=int, default=100, help='the print frequency')
     parser.add_argument('--save_interval', type=int, default=10000, help='save a checkpoint within an epoch')
     parser.add_argument('--resume', type=str, default=None, help='whether re-train model')
 
@@ -241,7 +242,8 @@ def train_one_epoch(args, model, train_dl, optimizer, scheduler, reporter, paren
     model = model.train()
     optimizer.zero_grad()
 
-    for b_idx, batch in enumerate(reporter.measure_iter_time(train_dl, "iter_time"), 1):
+    for b_idx, batch in tqdm(enumerate(reporter.measure_iter_time(train_dl, "iter_time"), 1)):
+        # print("Ch0")
         seqs, masks, lengths, conti_segs, example_ids, tasks = batch
         data_stats = {
             "batch_size": len(seqs),
@@ -270,9 +272,13 @@ def train_one_epoch(args, model, train_dl, optimizer, scheduler, reporter, paren
             for v in metrics.values(): # Cross-GPU statistics
                 dist.all_reduce(v, dist.ReduceOp.AVG)
             reporter.register(metrics, weight=masks.int().sum().item())
+        
+        # print("Ch1")
 
         with reporter.measure_time("backward_time"):
             loss.backward()
+
+        # print("Ch2")
 
         with reporter.measure_time("optim_time"):
             if b_idx % args.grad_accum == 0:
@@ -289,8 +295,12 @@ def train_one_epoch(args, model, train_dl, optimizer, scheduler, reporter, paren
               {f'lr_param_{i}': pg['lr'] for i, pg in enumerate(optimizer.param_groups)}
             )
 
+        # print("Ch3")
+
         # must call this here so that the saved checkpoint is valid for reporter
         reporter.next()
+
+        # print("Ch4")
 
         if b_idx % args.print_freq == 0:
             logging.info(reporter.log_message(-args.print_freq))
@@ -305,7 +315,7 @@ def train_one_epoch(args, model, train_dl, optimizer, scheduler, reporter, paren
 def validate_model(args, model, valid_dl, reporter):
     model = model.eval()
 
-    for b_idx, batch in enumerate(reporter.measure_iter_time(valid_dl, "iter_time"), 1):
+    for b_idx, batch in tqdm(enumerate(reporter.measure_iter_time(valid_dl, "iter_time"), 1)):
         seqs, masks, lengths, conti_segs, example_ids, tasks = batch
         data_stats = {
             "batch_size": len(seqs),
