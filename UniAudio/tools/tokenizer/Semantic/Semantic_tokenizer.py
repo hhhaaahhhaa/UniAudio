@@ -25,8 +25,9 @@ class SemanticTokenizer(AbsTokenizer):
         # So, when distributed training is launched, this should still be on CPU
         self.device = device
 
-        self.hubert_path = 'UniAudio/checkpoints/hubert_base_ls960.pt'
-        self.quantizer_path = 'UniAudio/checkpoints/hubert_base_ls960_L9_km500.bin'
+        uniaudio_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        self.hubert_path = f'{uniaudio_root}/checkpoints/hubert_base_ls960.pt'
+        self.quantizer_path = f'{uniaudio_root}/checkpoints/hubert_base_ls960_L9_km500.bin'
         self.hubert_kmeans = HubertWithKmeans(checkpoint_path=self.hubert_path, kmeans_path=self.quantizer_path)
         self.hubert_kmeans = self.hubert_kmeans.to(self.device)
 

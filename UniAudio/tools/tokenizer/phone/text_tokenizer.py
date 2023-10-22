@@ -9,7 +9,7 @@ from tools.tokenizer.abs_tokenizer import AbsTokenizer
 # text-to-phone
 class Text2PhoneTokenizer(AbsTokenizer):
     def __init__(self, langdir='UniAudio/checkpoints/lang_nosp'):
-        super(TextTokenizer, self).__init__()
+        super(Text2PhoneTokenizer, self).__init__()
         self.sil = open(join(langdir,
                 "phones/optional_silence.txt")).readline().strip()
         self.oov_word = open(join(langdir, "oov.txt")).readline().strip()
@@ -41,6 +41,8 @@ class Text2PhoneTokenizer(AbsTokenizer):
         ans =  ' '.join(phone_trans)
         return  ans
 
-ttokenizer = TextTokenizer()
-txt = "Hello"
-print(ttokenizer.tokenize(txt))
+
+if __name__ == "__main__":
+    ttokenizer = Text2PhoneTokenizer()
+    txt = "Hello"
+    print(ttokenizer.tokenize(txt))

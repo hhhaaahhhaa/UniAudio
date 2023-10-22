@@ -36,11 +36,12 @@ class AudioTokenizer(AbsTokenizer):
 
         # Jinchuan: TODO: make this confiurable
         tag = "universal" if universal else "tts"
-        config_path = f'UniAudio/checkpoints/{tag}_model/config.yaml'
+        uniaudio_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+        config_path = f'{uniaudio_root}/checkpoints/{tag}_model/config.yaml'
         if not os.path.isfile(config_path):
             raise ValueError(f"{config_path} file does not exist.")
         config = OmegaConf.load(config_path)
-        self.ckpt_path = f"UniAudio/checkpoints/{tag}_model/model.pth"
+        self.ckpt_path = f"{uniaudio_root}/checkpoints/{tag}_model/model.pth"
         logging.info(f"using config {config_path} and model {self.ckpt_path}")
         self.soundstream = self.build_codec_model(config)
         # properties

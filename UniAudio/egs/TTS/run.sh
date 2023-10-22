@@ -3,19 +3,19 @@
 # tts: phone + prompt ---> wave
 . ./path.sh
 
-pip3 install fairseq==0.12.2 einops==0.6.0 sentencepiece encodec
+# pip3 install fairseq==0.12.2 einops==0.6.0 sentencepiece encodec
 
 stage=1
 stop_stage=100
 ngpu=1  # how many GPUs, you want to use to train the model
 
-train_set="train"
-valid_set="val"
-test_sets=""
+train_set="train-clean-100"
+valid_set="dev-clean"
+test_sets="test-clean"
 
 # training config
 seed=999
-debug=false
+debug=true
 batch_scale=8000 # the total number of tokens in one batch
 learning_rate=0.005 # the learning rate
 port=12345
@@ -24,7 +24,7 @@ inference_opts=
 tag=
 inference_tag=default
 resume=
-data_tag=
+data_tag='LibriTTS'
 TASK='TTS'
 
 if [ ! -d "utils" ]; then
@@ -179,7 +179,7 @@ if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
         --singPhoneTokenizer "sing_phone" \
         --singMidiTokenizer "sing_midi" \
         --FrozenT5Embedder "text_t5" \
-        --n_layer 24 \
+        --n_layer 6 \
         --n_head 16 \
         --n_embd 1536 \
         $train_opts

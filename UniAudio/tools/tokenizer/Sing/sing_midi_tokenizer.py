@@ -1,10 +1,11 @@
+import os
 import torch
 import logging
 import sys
 from tools.tokenizer.abs_tokenizer import AbsTokenizer
 
 class SingMidiTokenizer(AbsTokenizer):
-    def __init__(self, phone_table='UniAudio/tools/tokenizer/Sing/f0_dict.txt'):
+    def __init__(self, phone_table=f'{os.path.dirname(__file__)}/f0_dict.txt'):
         AbsTokenizer.__init__(self)
         phone_dict = open(phone_table, encoding="utf-8").readlines()
         phone_dict = [line.strip().split() for line in phone_dict]

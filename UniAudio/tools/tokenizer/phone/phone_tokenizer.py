@@ -1,11 +1,13 @@
+import os
 import torch
 import logging
 from tools.tokenizer.abs_tokenizer import AbsTokenizer
 from tools.tokenizer.common import speech_edit_find_time_stamp
 
 class PhoneTokenizer(AbsTokenizer):
-    def __init__(self, phone_table='tools/tokenizer/phone/phone_dict', unk_ph=None):
+    def __init__(self, phone_table=f'{os.path.dirname(__file__)}/phone_dict', unk_ph=None, duplicate=False):
         super(PhoneTokenizer, self).__init__()
+        self.duplicate = duplicate
 
         phone_dict = open(phone_table, encoding="utf-8").readlines()
         phone_dict = [line.strip().split() for line in phone_dict]
@@ -47,6 +49,7 @@ class PhoneTokenizer(AbsTokenizer):
             duplicate = False
         else: # e.g., offline, speech edit
             duplicate = True
+        duplicate = self.duplicate
  
         if isinstance(x, torch.Tensor):
             assert x.dim() == 1

@@ -90,6 +90,8 @@ def main():
     dist.init_process_group(backend="nccl", init_method="env://")
     rank, local_rank, world_size = dist.get_rank(), int(os.environ["LOCAL_RANK"]), dist.get_world_size()
     assert torch.cuda.is_available(), "CUDA is not available"
+    # print(local_rank)
+    # input()
     torch.cuda.set_device(local_rank)
 
     # (2) arg parsing and logging
