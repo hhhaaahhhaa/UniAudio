@@ -268,6 +268,7 @@ class MegaByteModel(nn.Module):
                 data = self.continuous_mappings[tp](data)
                 # print('embs ', embs.shape)
                 # print('data3 ', data.shape)
+                # input()
                 embs[i, start: end] = data
 
         return embs

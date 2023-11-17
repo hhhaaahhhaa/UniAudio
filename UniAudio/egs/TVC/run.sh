@@ -5,13 +5,13 @@
 
 # pip3 install fairseq==0.12.2 einops==0.6.0 sentencepiece encodec
 
-stage=1
+stage=5
 stop_stage=100
 ngpu=1  # how many GPUs, you want to use to train the model
 
-train_set="train-clean-100"
-valid_set="dev-clean"
-test_sets="test-clean"
+train_set="train"
+valid_set="validation"
+test_sets="test"
 
 # training config
 seed=999
@@ -62,11 +62,11 @@ fi
 
 # Prepare data following Espnet and split
 if [ ${stage} -le 1 ] && [ ${stop_stage} -ge 1 ]; then
-    echo "Prepare LibriTTS dataset"
+    echo "Prepare dataset"
     # this part aims to get the information about the dataset. 
     # Considering different tasks using different dataset, we donot provide the scripts to access dataset
     # for audio data, please prepare wav.scp and source_wav.scp
-    # for prompt, please prepare text_prompt
+    # for prompt, please prepare instruction.scp
 fi
 
 if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
@@ -86,34 +86,33 @@ if [ ${stage} -le 2 ] && [ ${stop_stage} -ge 2 ]; then
     done
 fi
 
-# Plain TTS requires 2 data keys: phone_seq, audio_seq
-# stage 2-3 process audio_seq and phone_seq respectively
+# stage 2-3 process sequences respectively
 if [ ${stage} -le 3 ] && [ ${stop_stage} -ge 3 ]; then
     echo "Prepare text and audio sequence"
     for part in $valid_set $train_set; do
     # for part in $valid_set; do
       echo "prepare $part ... "
 
-      # split source_wav.scp based on wav.scp
+      # split source_wav.scp based on wav.scp (target)
       utils/run.pl JOB=1:$ngpu data/${part}/${ngpu}splits/log/filter_source_wav.JOB.log \
         python3 data_scripts/filter_scp.py \
           data/${part}/${ngpu}splits/wav.JOB.scp data/${part}/source_wav.scp \
           data/${part}/${ngpu}splits/source_wav.JOB.scp || exit 1;
 
-      # Text Prompt
-      utils/run.pl JOB=1:$ngpu data/${part}/${ngpu}splits/log/filter_text.JOB.log \
-        python3 data_scripts/filter_scp.py \  # TODO: create new .py to parse text prompt
-          data/${part}/${ngpu}splits/wav.JOB.scp data/${part}/text_prompt \
-          data/${part}/${ngpu}splits/text_prompt.JOB || exit 1;
+      # Instruction
+      utils/run.pl JOB=1:$ngpu data/${part}/${ngpu}splits/log/filter_instruction.JOB.log \
+        python3 data_scripts/filter_scp.py \
+          data/${part}/${ngpu}splits/wav.JOB.scp data/${part}/instruction.scp \
+          data/${part}/${ngpu}splits/instruction.JOB || exit 1;
 
       # Audio Source
       utils/run.pl JOB=1:$ngpu data/${part}/${ngpu}splits/log/audio_source_codec_dump.JOB.log \
         python3 data_scripts/offline_tokenization.py \
-          --input-file data/${part}/${ngpu}splits/wav.JOB.scp \
+          --input-file data/${part}/${ngpu}splits/source_wav.JOB.scp \
           --output-file data/${part}/${ngpu}splits/audio_source_codec.JOB.pt \
           --tokenizer audio --rank JOB || exit 1;
 
-      # Audio
+      # Audio Target
       utils/run.pl JOB=1:$ngpu data/${part}/${ngpu}splits/log/audio_codec_dump.JOB.log \
         python3 data_scripts/offline_tokenization.py \
           --input-file data/${part}/${ngpu}splits/wav.JOB.scp \
@@ -132,7 +131,7 @@ if [ ${stage} -le 4 ] && [ ${stop_stage} -ge 4 ]; then
         python3 data_scripts/create_data_json.py \
          --task TVC \
          --out-json   $PWD/data/${part}/${ngpu}splits/data_tvc.${n}.json \
-         --text_t5_seq $PWD/data/${part}/${ngpu}splits/text_prompt.$[$n+1] \
+         --text_t5_seq $PWD/data/${part}/${ngpu}splits/instruction.$[$n+1] \
          --audio_source_seq $PWD/data/${part}/${ngpu}splits/audio_source_codec.$[$n+1].pt \
          --audio_seq  $PWD/data/${part}/${ngpu}splits/audio_codec.$[$n+1].pt \
          & 
