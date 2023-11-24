@@ -508,7 +508,7 @@ def get_data_iterator_tokenizer_vocabulary(
       '<sing_task>', '<sing_phone_start>', '<sing_phone_end>', 
       '<sing_midi_start>', '<sing_midi_end>',
       '<TTM_task>', '<Audit_task>', '<InstructTTS_task>', '<Speech_RIR_task>', '<speech_edit_task>',
-      '<TVC_task>'
+      '<TVC_task>', '<style_disc_task>'
     ]
     logging.info(f"Special tokens: {token_list}")
     token_list = token_list + ["<unused_special_token>" for _ in range(128 - len(token_list))]
