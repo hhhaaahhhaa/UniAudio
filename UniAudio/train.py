@@ -76,8 +76,8 @@ def get_args():
 
     # args for save model and log: 
     parser.add_argument('--exp_dir', type=str, help='directory of this experiment')
-    parser.add_argument('--print_freq', type=int, default=100, help='the print frequency')
-    parser.add_argument('--save_interval', type=int, default=10000, help='save a checkpoint within an epoch')
+    parser.add_argument('--print_freq', type=int, default=1000, help='the print frequency')
+    parser.add_argument('--save_interval', type=int, default=100000, help='save a checkpoint within an epoch')
     parser.add_argument('--resume', type=str, default=None, help='whether re-train model')
 
     add_tokenizer_arguments(parser)

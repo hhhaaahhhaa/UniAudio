@@ -15,7 +15,7 @@ test_sets="test"
 
 # training config
 seed=999
-debug=true
+debug=false
 batch_scale=4000 # the total number of tokens in one batch
 learning_rate=0.005 # the learning rate
 port=12345

@@ -174,7 +174,7 @@ if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
         --singPhoneTokenizer "sing_phone" \
         --singMidiTokenizer "sing_midi" \
         --FrozenT5Embedder "text_t5" \
-        --n_layer 6 \
+        --n_layer 12 \
         --n_head 16 \
         --n_embd 1536 \
         $train_opts

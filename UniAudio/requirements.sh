@@ -28,3 +28,6 @@ pip install resampy
 pip install datasets
 pip install scikit-image
 pip install ssr_eval
+pip install encodec
+pip install sentencepiece
+pip install fairseq

@@ -47,15 +47,15 @@ def parse_tencent(src: str, res):
     with open(f"{src}/tvc_metadata.json", 'r') as f:
         info = json.load(f)
     for subset in info:
-        for instance in info[subset]:
+        for instance in info[subset][:100000]:
             id = instance["file_id"]
             wav_id = instance["wav_id"]
             data = {
                 "id": id,
-                "src": f"{src}/data/{wav_id}/source.wav",
-                "tgt": f"{src}/data/{wav_id}/final_target.wav",
-                "instruction": instance["instruction"],
-                "transcription": instance["transcription"],
+                "src": f"{src}/data/{wav_id:05d}/source.wav",
+                "tgt": f"{src}/data/{wav_id:05d}/final_target.wav",
+                "instruction": instance["instruction"].strip(),
+                "transcription": instance["transcription"].strip(),
             }
             res[subset].append(data)
 
