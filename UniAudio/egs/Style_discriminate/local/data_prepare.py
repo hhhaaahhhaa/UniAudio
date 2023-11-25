@@ -7,7 +7,7 @@ from tqdm import tqdm
 def parse_google(src: str, res):
     for subset in ["train", "validation", "test"]:
         root = f"{src}/{subset}"
-        for path in tqdm(os.listdir(f"{root}/source")[:100]):
+        for path in tqdm(os.listdir(f"{root}/source")):
             id = path[:-4]
             with open(f"{root}/transcription/{id}.txt", "r") as f1:
                 transcription = f1.read()
@@ -26,7 +26,7 @@ def parse_google(src: str, res):
 def parse_prompt_speech(src: str, res):
     for subset in ["train", "test"]:
         root = f"{src}/{subset}"
-        for path in tqdm(os.listdir(f"{root}/source")[:100]):
+        for path in tqdm(os.listdir(f"{root}/source")):
             id = path[:-4]
             with open(f"{root}/transcription/{id}.txt", "r") as f1:
                 transcription = f1.read()
@@ -47,7 +47,7 @@ def parse_tencent(src: str, res):
     with open(f"{src}/tvc_metadata.json", 'r') as f:
         info = json.load(f)
     for subset in info:
-        for instance in info[subset][:100000]:
+        for instance in info[subset]:
             id = instance["file_id"]
             wav_id = instance["wav_id"]
             data = {
@@ -69,7 +69,7 @@ def main(args):
     }
     parse_google(args.src_google, data_dict)
     parse_prompt_speech(args.src_prompt_speech, data_dict)
-    # parse_google(args.src_tencent, data_dict)
+    parse_tencent(args.src_tencent, data_dict)
     for subset in ["train", "validation", "test"]:
         os.makedirs(f"{dst}/{subset}", exist_ok=True)
         source_wav_scp_path = f"{dst}/{subset}/source_wav.scp"
