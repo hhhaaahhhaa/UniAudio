@@ -158,12 +158,13 @@ if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
     if [ -z $tag ]; then
         echo "please provide a tag for this experiment" && exit 1;
     fi
+    mkdir -p exp/${tag}
     echo "stage 5: training..."
     NCCL_DEBUG=TRACE torchrun \
         --nproc_per_node ${HOST_GPU_NUM} --master_port $port \
         --nnodes=${HOST_NUM} --node_rank=${INDEX} --master_addr=${CHIEF_IP} \
         ../../train.py \
-        --exp_dir exp \
+        --exp_dir exp/${tag} \
         --seed $seed \
         --cudnn_deterministic \
         --train_data_jsons $train_data_jsons \

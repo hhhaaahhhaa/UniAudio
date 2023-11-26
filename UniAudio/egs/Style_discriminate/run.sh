@@ -159,12 +159,13 @@ if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
     if [ -z $tag ]; then
         echo "please provide a tag for this experiment" && exit 1;
     fi
+    mkdir -p exp/${tag}
     echo "stage 5: training..."
     NCCL_DEBUG=TRACE torchrun \
         --nproc_per_node ${HOST_GPU_NUM} --master_port $port \
         --nnodes=${HOST_NUM} --node_rank=${INDEX} --master_addr=${CHIEF_IP} \
         ../../train.py \
-        --exp_dir exp \
+        --exp_dir exp/${tag} \
         --seed $seed \
         --cudnn_deterministic \
         --train_data_jsons $train_data_jsons \
@@ -181,8 +182,38 @@ if [ ${stage} -le 5 ] && [ ${stop_stage} -ge 5 ]; then
         --singMidiTokenizer "sing_midi" \
         --FrozenT5Embedder "text_t5" \
         --sv-bool-tokenizer "sv_bool" \
+        --prefix-lm "True" \
         --n_layer 6 \
         --n_head 16 \
         --n_embd 1536 \
         $train_opts
+fi
+
+
+vc_test_sets="validation"
+inference_dir=exp/${tag}/inference
+if [ ${stage} -le 6 ] && [ ${stop_stage} -ge 6 ]; then
+    echo "stage 2: Style discriminator inference ..."
+    mkdir -p ${inference_dir}
+    for part in $vc_test_sets; do
+        mkdir -p ${inference_dir}/${part}
+        echo "inference on set: ${part}"
+        data_json="data/validation/1splits/data_style_disc.0.json" # your val set .json file
+
+        utils/run.pl --max-jobs-run 8 JOB=0:$[${ngpu}-1] \
+          ${inference_dir}/${part}/inference.JOB.log \
+          python3 ../../infer.py \
+            --exp_dir exp/${tag} \
+            --rank JOB \
+            --inference_mode 'greedy' \
+            --n_samples 1 \
+            --maxlen_ratio 1 \
+            --topk 1 \
+            --seed 888 \
+            --data_json $data_json \
+            --generate_target sv_bool \
+            --fixed_length False \
+            --output_dir ${inference_dir}/${part}/JOB \
+            --reserve_input False
+    done
 fi

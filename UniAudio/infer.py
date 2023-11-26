@@ -19,7 +19,7 @@ from utils.task_definition import task_formats
 from utils.arguments import add_tokenizer_arguments
 
 from model import (
-    DecoderOnlyModel, 
+    # DecoderOnlyModel, 
     MegaByteModel, 
     CrossEntropyAndAccuracy,
     MultiHeadAttention,
@@ -158,6 +158,8 @@ def main():
 
             target_tokenizer = tokenizers[target_type]
             for r_idx, r in enumerate(searched_results):
+                print("chkresformat")
+                print(r_idx, r['tokens'])
                 searched = chunk_after_end(
                     r['tokens'], 
                     train_args.token_list.index(f"<{target_type}_end>")
@@ -292,6 +294,8 @@ class InferenceImp(object):
 
         self.token_list = token_list
         self.target = target
+        self.target_token_idx_start = start
+        self.target_token_idx_end = end
 
     @torch.no_grad()
     def __call__(self, seq, mask, conti_segs):
@@ -311,6 +315,29 @@ class InferenceImp(object):
         pad_len = seq[0].eq(0).int().sum().item()
         mask = mask[:, :len(seq[0]) - pad_len]
         seq = seq[:, :len(seq[0]) - pad_len]
+
+        if self.target == "sv_bool":  # Hacking for classification tasks
+            prefix_len = torch.logical_and(~mask[0], seq[0].ne(0)).int().sum().item() + self.na_repeat
+            prefix = seq[:, :prefix_len + self.na_repeat]
+            prefix[:, -self.na_repeat:] = 0  # ensure no info leak
+            mask = mask[:, :prefix_len + self.na_repeat]
+            prefix_logits = self.model(prefix, mask, None, conti_segs)
+            hacking = prefix_logits.log_softmax(-1)[:, -self.na_repeat:].squeeze(0)
+            hacking.masked_fill_(
+                self.pred_valid_masks[0].to(device).unsqueeze(0), float('-inf')
+            )
+            hacking[:, self.target_end] = float('-inf')
+            _, hack_top_idx = torch.topk(hacking, self.topk, dim=-1)
+            hack_top_idx = hack_top_idx[:, 0]
+            tokens = torch.cat([hack_top_idx, torch.ones_like(hack_top_idx) * self.target_end], dim=0)
+            searched_results = [{
+                'logits': hacking,
+                'tokens': tokens,
+                'scores': [],
+                'sum_score': 0.0,
+            } for _ in range(self.n_samples)]
+            return searched_results
+        
         # (1) prefix inference
         prefix_len = torch.logical_and(~mask[0], seq[0].ne(0)).int().sum().item()
         prefix = seq[:, :prefix_len + self.na_repeat]
@@ -373,6 +400,7 @@ class InferenceImp(object):
                     logging.info(f'warning: invalid logp summation {g_idx} {l_idx} {logp.exp().sum(dim=-1)}')
                     logging.info(f'original topk: {topk_values_orig} {topk_indices_orig}')
                 topk_values, topk_indices = torch.topk(logp, self.topk, dim=-1)
+                print(f"chk2tok-{g_idx}-{l_idx}", logp[:, 4007:4009])
 
                 if self.mode == "teacher-force":
                     l_prev_tok = torch.ones_like(l_prev_tok) * \

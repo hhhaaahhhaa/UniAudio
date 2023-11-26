@@ -327,6 +327,7 @@ class Collate_Fn_Factory(object):
 
         for idx, (example_id, d) in enumerate(batch):
             task_format = task_formats[d['task']]
+            # print("chkseq", example_id)
             sequence, mask, conti_seg, length = self.splice_sequence(
                 d, task_format['keys'], task_format['type'], task_format['loss_key']
             )

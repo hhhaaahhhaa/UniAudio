@@ -397,11 +397,29 @@ def CrossEntropyAndAccuracy(logits, y, mask, prefix_lm=True, ignore_id=0):
     num_all_tokens = y.ne(ignore_id).int().sum()
     num_tgt_tokens = mask.int().sum()
 
+    # acc_all = torch.logical_and(pred.eq(y), y.ne(ignore_id)).int().sum() / num_all_tokens
+    # acc_tgt = torch.logical_and(pred.eq(y), mask).int().sum() / num_tgt_tokens
+
+    # if prefix_lm:
+    #     loss = (loss * mask.int()).sum() / num_tgt_tokens
+    # else:
+    #     loss = loss.sum() / num_all_tokens
+
+    # Hack
     acc_all = torch.logical_and(pred.eq(y), y.ne(ignore_id)).int().sum() / num_all_tokens
-    acc_tgt = torch.logical_and(pred.eq(y), mask).int().sum() / num_tgt_tokens
+    first_token_selection = torch.zeros_like(mask)
+    first_nonzero_idxs = mask.int().argmax(dim=-1)
+    for i, j in enumerate(first_nonzero_idxs):
+        # print(j, mask[i, j-1:j+1])
+        first_token_selection[i, j] = 1
+    num_tgt_tokens = first_token_selection.int().sum()
+
+    acc_tgt = torch.logical_and(pred.eq(y), first_token_selection).int()
+    acc_tgt = acc_tgt.sum() / num_tgt_tokens  # Only consider the first token for classification
 
     if prefix_lm:
-        loss = (loss * mask.int()).sum() / num_tgt_tokens
+        loss = torch.masked_select(loss, first_token_selection)
+        loss = loss.sum() / num_tgt_tokens  # Only consider the first token for classification
     else:
         loss = loss.sum() / num_all_tokens
 
